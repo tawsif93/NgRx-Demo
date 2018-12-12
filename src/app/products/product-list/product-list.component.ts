@@ -51,7 +51,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
     this.store.dispatch({
       type: 'TOGGLE_PRODUCT_CODE',
       payload: value,
-    })
+    });
   }
 
   newProduct(): void {
