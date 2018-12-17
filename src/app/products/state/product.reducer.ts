@@ -40,16 +40,29 @@ export const getError = createSelector(
     getProductFeatureState,
     state => state.error
 );
-// export const getCurrentproduct = createSelector(
-//     getProductFeatureState,
-//     getCurrentProductId,
-//     (state , currentProductId) => state.products.find( p => p.id === currentProductId)
-// );
 
 export const getCurrentproduct = createSelector(
     getProductFeatureState,
-    (state ) => state.currentProduct
+    getCurrentProductId,
+    (state, currentProductId) => {
+        if (currentProductId === 0) {
+            return {
+                id: 0,
+                productName: '',
+                productCode: 'New',
+                description: '',
+                starRating: 0
+            };
+        } else {
+          return currentProductId ? state.products.find(p => p.id === currentProductId) : null;
+        }
+    }
 );
+
+// export const getCurrentproduct = createSelector(
+//     getProductFeatureState,
+//     (state ) => state.currentProduct
+// );
 
 export const getProducts = createSelector(
     getProductFeatureState,
@@ -66,12 +79,14 @@ export function reducer(state: ProductState = initialState, action: ProductActio
         case ProductActionTypes.SetCurrentProduct:
           return {
             ...state,
-            currentProduct: { ...action.payload }
+            currentProduct: { ...action.payload },
+            currentProductId: action.payload.id,
           };
         case ProductActionTypes.ClearCurrentProduct:
           return {
             ...state,
-            currentProduct: null
+            currentProduct: null,
+            currentProductId: null,
           };
         case ProductActionTypes.InitializeCurrentProduct:
           return {
@@ -82,7 +97,8 @@ export function reducer(state: ProductState = initialState, action: ProductActio
               productCode: 'New',
               description: '',
               starRating: 0
-            }
+            },
+            currentProductId: 0,
           };
         case ProductActionTypes.LoadSuccess:
           return {
@@ -96,6 +112,53 @@ export function reducer(state: ProductState = initialState, action: ProductActio
               products: [],
               error: action.payload
           };
+        case ProductActionTypes.UpdateProductSuccess:
+          const updatedProducts = state.products.map(
+            item => action.payload.id === item.id ? action.payload : item);
+          return {
+            ...state,
+            products: updatedProducts,
+            currentProduct: { ...action.payload },
+            currentProductId: action.payload.id,
+            error: ''
+          };
+        case ProductActionTypes.UpdateProductFail:
+          return {
+            ...state,
+            error: action.payload
+          };
+        // After a create, the currentProduct is the new product.
+        case ProductActionTypes.CreateProductSuccess:
+            return {
+            ...state,
+            products: [...state.products, action.payload],
+            currentProduct: { ...action.payload },
+            currentProductId: action.payload.id,
+            error: ''
+            };
+
+        case ProductActionTypes.CreateProductFail:
+            return {
+            ...state,
+            error: action.payload
+            };
+
+        // After a delete, the currentProduct is null.
+        case ProductActionTypes.DeleteProductSuccess:
+            return {
+            ...state,
+            products: state.products.filter(product => product.id !== action.payload),
+            currentProductId: null,
+            currentProduct: null,
+            error: ''
+            };
+
+        case ProductActionTypes.DeleteProductFail:
+            return {
+            ...state,
+            error: action.payload
+            };
+
         default:
             return state;
     }
